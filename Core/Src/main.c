@@ -106,7 +106,8 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+	/* USER CODE BEGIN 3 */
+	  uint16_t flag = 0xffff;
   }
   /* USER CODE END 3 */
 }
