@@ -1,0 +1,30 @@
+name: STM32 Build CI
+
+# กำหนดให้ทำงานเมื่อมีการเปิด Pull Request เข้าสู่สาย main หรือมีคนดันโค้ดขึ้น main
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. ดึงโค้ดจากโปรเจกต์ลงมาในเซิร์ฟเวอร์จำลองของ GitHub
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # 2. ติดตั้ง Compiler สำหรับสถาปัตยกรรม ARM (STM32)
+    - name: Install ARM GCC Toolchain
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-arm-none-eabi make
+
+    # 3. สั่งรันคำสั่ง make เพื่อ Build โปรเจกต์
+    # (หมายเหตุ: ตรวจสอบให้แน่ใจว่าในโปรเจกต์ของคุณมีไฟล์ชื่อ 'Makefile' อยู่ที่หน้าแรกสุด)
+    - name: Build Project
+      run: |
+        make clean
+        make all
