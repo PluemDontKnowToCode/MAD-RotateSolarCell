@@ -11,6 +11,11 @@
 #include "INA219.h"
 enum BatteryState batteryState;
 
+bool isFirst;
+uint16_t ina219_calibrationValue ;
+int16_t ina219_currentDivider_mA ;
+int16_t ina219_powerMultiplier_mW ;
+
 /*
  * @brief:		Read a register from the IN219 sensor.
  * @param:		Pointer to the device object that was made from the struct. EX:  (&ina219)
