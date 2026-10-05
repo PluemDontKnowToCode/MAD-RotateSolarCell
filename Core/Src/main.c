@@ -33,7 +33,13 @@
 #include "string.h"
 #include "ILI9341_STM32_Driver.h"
 #include "ILI9341_GFX.h"
+#include "ILI9341_Myhelperfunction.h"
+
+//image include
 #include "TeamIcon.h"
+#include "SolarCellIcon.h"
+#include "Zap.h"
+#include "battery.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,7 +62,58 @@
 /* USER CODE BEGIN PV */
 uint16_t fontColor;
 uint16_t BgColor;
+uint16_t SubBgColor;
+uint16_t buttonColor;
+uint16_t unButtonColor;
+
+
+
+//0x00 Start UI
+//0x01 DashboardUI
+//0x02 Control UI
 uint8_t uipage = 0x00;
+
+uint8_t ui1initState = 0;
+
+uint16_t x = 0, y = 0;
+
+//Solar Cell
+//Mock data
+uint16_t solarCellWatt = 10;
+uint16_t solarCellAmpare = 10;
+uint16_t solarCellVolt = 10;
+
+//0
+//1
+uint8_t trackingModeState = 0;
+
+//////////////////////BATTERY//////////////////////////
+uint8_t batteryPercent = 0;
+//0 Chg
+//1 disChg
+uint8_t batteryState = 0;
+
+//Show how much battery current capacity as range
+//0 : 0 - 33 %
+//1 : 34 - 67 %
+//2 :: 68 - 100 %
+uint8_t batterySizeState = 0;
+///////////////////////////////////////////////////////
+//Load
+//Mock data
+uint16_t loadWatt = 10;
+uint16_t loadAmpare = 10;
+uint16_t loadVolt = 10;
+
+
+/////////////////  CHOOSE SOURCE ////////////////////////
+//0 battery
+//1 utility grid
+uint8_t sourceState = 0;
+/////////////////////////////////////////////////////////
+
+char s_trackingDisplayBuffer[25] = "\0";
+char s_posBuffer[25] = "\0";
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -67,22 +124,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void ILI9341_Draw_Image_With_Pos(const uint16_t *img, uint16_t startX, uint16_t startY,
-                                 uint16_t img_w, uint16_t img_h, uint16_t bgColor)
-{
-    ILI9341_Set_Address(startX, startY, startX + img_w - 1, startY + img_h - 1);
 
-    uint32_t total_pixels = (uint32_t)img_w * img_h;
-    for (uint32_t i = 0; i < total_pixels; i++)
-    {
-        uint16_t px = ((uint16_t)img[i * 2] << 8) | img[i * 2 + 1];
-
-        if (px == 0x0000) px = bgColor;      // null = transparent
-
-        ILI9341_Write_Data(px >> 8);         // high byte first
-        ILI9341_Write_Data(px & 0xFF);
-    }
-}
 //Color scale rgb 255 255 255
 uint16_t mixedColor(uint8_t r, uint8_t g, uint8_t b)
 {
@@ -98,18 +140,21 @@ uint16_t mixedColor(uint8_t r, uint8_t g, uint8_t b)
 
 	return (r5 << 11) | (g6 << 5) | b5;
 }
-#define FONT_GAP_COLS 1   // blank columns at the right of each glyph (check your font)
-
-float ILI9341_Text_Width(const char *Text, float Size)
+void My_Color_Init()
 {
-    uint16_t n = strlen(Text);
-    if (n == 0) return 0;
-    return (n * 6 - FONT_GAP_COLS) * Size;
+	BgColor = mixedColor(0x18, 0x18,0x1B);
+	fontColor = mixedColor(0xF1, 0xF5, 0xF9);
+	SubBgColor = mixedColor(0x27, 0x27, 0x2A);
+	buttonColor = mixedColor(0x9E, 0xF5, 0xCF);
+	unButtonColor = mixedColor(0x4E, 0x4E, 0x4E);
 }
+
 
 void StartUI()
 {
 	ILI9341_Fill_Screen(BgColor);
+	//draw image at 94 10 //W 131 //H 145
+
 	ILI9341_Draw_Image_With_Pos(icon, 94, 10, 131, 145, BgColor);
 
 	ILI9341_Draw_Text("Solar tracker dashboard", 27, 164, fontColor, 2, BgColor);
@@ -123,14 +168,175 @@ void StartUI()
 	HAL_UART_Transmit(&huart3, (uint8_t*)"Change UI\n\r", 11, 200);
 	uipage = 0x01;
 }
+void ToggleChooseSource(Rectangle rect5_1, Rectangle rect5_2)
+{
+	if(sourceState == 0)
+	{
+		//use battery
+		ILI9341_Draw_Filled_Rectangle_Coord(rect5_1.X0, rect5_1.Y0, rect5_1.X1, rect5_1.Y1, buttonColor);
+		ILI9341_Draw_Hollow_Rectangle_Coord(rect5_1.X0, rect5_1.Y0, rect5_1.X1, rect5_1.Y1, WHITE);
+		ILI9341_Draw_Text("Battery", rect5_1.X0 + 3, rect5_1.Y0 + 19, BLACK, 1, buttonColor);
+
+		//use utility
+		ILI9341_Draw_Filled_Rectangle_Coord(rect5_2.X0, rect5_2.Y0, rect5_2.X1, rect5_2.Y1, unButtonColor);
+		ILI9341_Draw_Hollow_Rectangle_Coord(rect5_2.X0, rect5_2.Y0, rect5_2.X1, rect5_2.Y1, WHITE);
+		ILI9341_Draw_Text("Utility", rect5_2.X0 + 9, rect5_2.Y0 + 11, fontColor, 0.8f, unButtonColor);
+		ILI9341_Draw_Text("grid", rect5_2.X0 + 13, rect5_2.Y0 + 25, fontColor, 1.2f, unButtonColor);
+	}
+	else
+	{
+		//use battery
+		ILI9341_Draw_Filled_Rectangle_Coord(rect5_1.X0, rect5_1.Y0, rect5_1.X1, rect5_1.Y1, unButtonColor);
+		ILI9341_Draw_Hollow_Rectangle_Coord(rect5_1.X0, rect5_1.Y0, rect5_1.X1, rect5_1.Y1, WHITE);
+		ILI9341_Draw_Text("Battery", rect5_1.X0 + 3, rect5_1.Y0 + 19, fontColor, 1, unButtonColor);
+
+		//use utility
+		ILI9341_Draw_Filled_Rectangle_Coord(rect5_2.X0, rect5_2.Y0, rect5_2.X1, rect5_2.Y1, buttonColor);
+		ILI9341_Draw_Hollow_Rectangle_Coord(rect5_2.X0, rect5_2.Y0, rect5_2.X1, rect5_2.Y1, WHITE);
+		ILI9341_Draw_Text("Utility", rect5_2.X0 + 9, rect5_2.Y0 + 11, BLACK, 0.8f, buttonColor);
+		ILI9341_Draw_Text("grid", rect5_2.X0 + 13, rect5_2.Y0 + 25, BLACK, 1.2f, buttonColor);
+	}
+}
+
+void UpdateBatteryUI(Rectangle rect)
+{
+	if(batteryPercent <= 33 && (batterySizeState != 0 || ui1initState == 1))
+	{
+		ILI9341_Draw_Image_With_Pos(battery_low, rect.X0 + 40, rect.Y0 + 21, 42, 42, SubBgColor);
+		batterySizeState = 0;
+	}
+	else if(batteryPercent <= 67 && batteryPercent >= 34 && (batterySizeState != 1 || ui1initState == 1))
+	{
+		ILI9341_Draw_Image_With_Pos(battery_half, rect.X0 + 40, rect.Y0 + 21, 42, 42, SubBgColor);
+		batterySizeState = 1;
+	}
+	else if(batteryPercent <= 100 && batteryPercent >= 68 && (batterySizeState != 2 || ui1initState == 1))
+	{
+		ILI9341_Draw_Image_With_Pos(battery_high, rect.X0 + 40, rect.Y0 + 21, 42, 42, SubBgColor);
+		batterySizeState = 2;
+	}
+
+	char temp[32];
+	char* state = (batteryState == 0) ? "CHG" : "DCHG";
+	sprintf(temp, "SOC: %u %% %s", batteryPercent, state);
+	ILI9341_Draw_Text(temp, rect.X0 + 10, rect.Y0 + 64, fontColor, 1, SubBgColor);
+
+	//Time left
+	//How dafuck to calculate this
+
+
+}
 void DashboardUI()
 {
+	ui1initState = 1;
 	ILI9341_Fill_Screen(BgColor);
 	//45 13
 	ILI9341_Draw_Text("Solar tracker dashboard", 45, 13, fontColor, 1.7f, BgColor);
+
+	//Solar power display
+	Rectangle rect1 = {0, 47, 0 + 101, 47 + 100};
+	ILI9341_Draw_Filled_Rectangle_Coord(rect1.X0, rect1.Y0, rect1.X1, rect1.Y1, SubBgColor);
+	ILI9341_Draw_Hollow_Rectangle_Coord(rect1.X0, rect1.Y0, rect1.X1, rect1.Y1, BLACK);
+	ILI9341_Draw_Text("Solar power", rect1.X0 + 7, rect1.Y0 + 5, fontColor, 1.2f, SubBgColor);
+	ILI9341_Draw_Image_With_Pos(solar_cell_image, rect1.X0 + 28, rect1.Y0 + 22, 45, 36, SubBgColor);
+
+	//Battery display
+	Rectangle rect2 = {101, 47, 101 + 118, 47 + 100};
+	ILI9341_Draw_Filled_Rectangle_Coord(rect2.X0, rect2.Y0, rect2.X1, rect2.Y1, SubBgColor);
+	ILI9341_Draw_Hollow_Rectangle_Coord(rect2.X0, rect2.Y0, rect2.X1, rect2.Y1, BLACK);
+	ILI9341_Draw_Text("Battery Left", rect2.X0 + 15, rect2.Y0 + 4, fontColor, 1.2f, SubBgColor);
+	UpdateBatteryUI(rect2);
+
+	//Load display
+	Rectangle rect3 = {219, 47, 219 + 101, 47 + 100};
+	ILI9341_Draw_Filled_Rectangle_Coord(rect3.X0, rect3.Y0, rect3.X1, rect3.Y1, SubBgColor);
+	ILI9341_Draw_Hollow_Rectangle_Coord(rect3.X0, rect3.Y0, rect3.X1, rect3.Y1, BLACK);
+	ILI9341_Draw_Text("LOAD", rect3.X0 + 34, rect3.Y0 + 5, fontColor, 1.2f, SubBgColor);
+	ILI9341_Draw_Image_With_Pos(zap_image, rect3.X0 + 34, rect3.Y0 + 24, 32, 32, SubBgColor);
+
+	//tracker button
+	Rectangle rect4 = {0, 147, 0 + 160, 147 + 92};
+	ILI9341_Draw_Filled_Rectangle_Coord(rect4.X0, rect4.Y0, rect4.X1, rect4.Y1, buttonColor);
+	ILI9341_Draw_Hollow_Rectangle_Coord(rect4.X0, rect4.Y0, rect4.X1, rect4.Y1, WHITE);
+	ILI9341_Draw_Text("Tracking Control Mode", rect4.X0 + 5, rect4.Y0 + 12, BLACK, 1.2f, buttonColor);
+
+
+	const char *modeText = (trackingModeState == 0) ? "Auto" : "Manual";
+	sprintf(s_trackingDisplayBuffer, "tracking mode: %s", modeText);
+	ILI9341_Draw_Text(s_trackingDisplayBuffer, rect4.X0 + 13, rect4.Y0 + 38, BLACK, 1, buttonColor);
+
+	//choose source
+	Rectangle rect5 = {160, 147, 160 + 160, 147 + 92};
+	ILI9341_Draw_Filled_Rectangle_Coord(rect5.X0, rect5.Y0, rect5.X1, rect5.Y1, SubBgColor);
+	ILI9341_Draw_Hollow_Rectangle_Coord(rect5.X0, rect5.Y0, rect5.X1, rect5.Y1, BLACK);
+	ILI9341_Draw_Text("Choose Source", rect5.X0 + 19, rect5.Y0 + 3, fontColor, 1.2f, SubBgColor);
+
+	Rectangle rect5_1 = {185, 172, 185 + 47, 172 + 50};
+	Rectangle rect5_2 = {251, 172, 251 + 47, 172 + 50};
+	ToggleChooseSource(rect5_1, rect5_2);
+	ui1initState = 0;
+	char temp[50];
 	while(1)
 	{
 		//process
+
+		//Update value
+		//Solar cell power
+		sprintf(temp, "%u.%u W", solarCellWatt / 10, solarCellWatt % 10);
+		ILI9341_Draw_Text(temp, rect1.X0 + 31, rect1.Y0 + 63, fontColor, 1, SubBgColor);
+
+		sprintf(temp, "%d V / %d A", solarCellVolt, solarCellAmpare);
+		ILI9341_Draw_Text(temp, rect1.X0 + 16, rect1.Y0 + 78, fontColor, 1, SubBgColor);
+
+		//battery
+		UpdateBatteryUI(rect2);
+
+
+		//load
+		sprintf(temp, "%u.%u W", loadWatt / 10, loadWatt % 10);
+		ILI9341_Draw_Text(temp, rect3.X0 + 31, rect3.Y0 + 63, fontColor, 1, SubBgColor);
+
+		sprintf(temp, "%d V / %d A", loadVolt, loadAmpare);
+		ILI9341_Draw_Text(temp, rect3.X0 + 16, rect3.Y0 + 78, fontColor, 1, SubBgColor);
+
+		//tracking mode dynamic
+		sprintf(s_posBuffer, "X:%d  Y:%d", x, y);
+		ILI9341_Draw_Text(s_posBuffer, rect4.X0 + 38, rect4.Y0 + 65, BLACK, 1.3f, buttonColor);
+
+
+
+		if (TP_Touchpad_Pressed())
+		{
+			uint16_t x_pos = 0;
+			uint16_t y_pos = 0;
+			uint16_t position_array[2];
+
+			if (TP_Read_Coordinates(position_array) == TOUCHPAD_DATA_OK)
+			{
+				//Map X, Y
+				x_pos = position_array[1];
+				y_pos = ILI9341_WIDTH - position_array[0];
+
+				if(PointInRectangle(x_pos, y_pos, rect5_1) && sourceState == 0)
+				{
+					sourceState = 1;
+					ToggleChooseSource(rect5_1, rect5_2);
+				}
+				else if(PointInRectangle(x_pos, y_pos, rect5_2) && sourceState == 1)
+				{
+					sourceState = 0;
+					ToggleChooseSource(rect5_1, rect5_2);
+				}
+				else if(PointInRectangle(x_pos, y_pos, rect4))
+				{
+					uipage = 0x02;
+				}
+			}
+		}
+//		batteryPercent++;
+//		if(batteryPercent > 100)
+//			batteryPercent = 0;
+		HAL_Delay(50);
 	}
 }
 void TrackingUI()
@@ -149,9 +355,7 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
-	//Color initialize
-	BgColor = mixedColor(0x18, 0x18,0x1B);
-	fontColor = mixedColor(0xF1, 0xF5, 0xF9);
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -180,6 +384,7 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   ILI9341_Init();//initial driver setup to drive ili9341
+  My_Color_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -205,12 +410,11 @@ int main(void)
 	  		  StartUI();
 	  		  break;
 	  }
-	  HAL_Delay(20);
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  uint16_t flag = 0xffff;
+//	  uint16_t flag = 0xffff;
   }
   /* USER CODE END 3 */
 }

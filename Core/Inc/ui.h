@@ -13,5 +13,5 @@
 void StartUI();
 void DashboardUI();
 void TrackingUI();
-void Color_Init();
+void My_Color_Init();
 #endif /* INC_UI_H_ */
