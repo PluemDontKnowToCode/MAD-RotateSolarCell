@@ -26,5 +26,5 @@ jobs:
     # (หมายเหตุ: ตรวจสอบให้แน่ใจว่าในโปรเจกต์ของคุณมีไฟล์ชื่อ 'Makefile' อยู่ที่หน้าแรกสุด)
     - name: Build Project
       run: |
-        make clean
-        make all
+        make -C Debug clean
+        make -C Debug all
