@@ -21,6 +21,7 @@
 #include "adc.h"
 #include "dma.h"
 #include "eth.h"
+#include "i2c.h"
 #include "rng.h"
 #include "spi.h"
 #include "tim.h"
@@ -32,6 +33,10 @@
 /* USER CODE BEGIN Includes */
 
 #include <ldr.h>
+#include <INA219.h>
+
+#include <stdio.h>
+#include <string.h>
 
 /* USER CODE END Includes */
 
@@ -42,7 +47,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define INA219_ADDRESS_1  INA219_ADDRESS  // ปกติคือ 0x40
+#define INA219_ADDRESS_2  0x41
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -53,13 +59,19 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+INA219_t ina219_solar;
+INA219_t ina219_battery;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+void displayNumber(uint16_t num){
+	char str[10];
 
+	sprintf(str,"%d \r\n",num);
+	HAL_UART_Transmit(&huart3, (uint8_t*)str, strlen(str), 1000);
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -104,8 +116,20 @@ int main(void)
   MX_SPI5_Init();
   MX_TIM1_Init();
   MX_ADC1_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
+  // Wait for initial I2C signal -> by wake the sensor before read it
+  // using Handle I2C 1 -> ใช้ I2C1 ของ board, PB6 for SCL and PB9 for SDA
+  while(!INA219_Init(&ina219_solar, &hi2c1, INA219_ADDRESS_1))
+	{
+
+	}
+  // using Handle I2C 2 -> ใช้ I2C2 ของ board, PF1 for SCL and PF0 for SDA
+  while(!INA219_Init(&ina219_battery, &hi2c1, INA219_ADDRESS_2))
+  	{
+
+	}
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -116,6 +140,18 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  uint16_t flag = 0xffff;
+
+      // test reading current sensor
+	  uint16_t power_solar  = INA219_ReadPower(&ina219_solar);
+	  uint16_t power_battery = INA219_ReadPower(&ina219_battery);
+
+	  // show value on terminal by using USART3
+	  displayNumber(power_solar);
+	  displayNumber(power_battery);
+
+	  // กันอ่านมันส์เกิน
+	  HAL_Delay(100);
+
   }
   /* USER CODE END 3 */
 }
