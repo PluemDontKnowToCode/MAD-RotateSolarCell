@@ -99,7 +99,7 @@ uint8_t trackingModeState = 0;
 uint8_t batteryPercent = 0;
 //0 Chg
 //1 disChg
-uint8_t batteryState = 0;
+uint8_t batteryChargingState = 0;
 
 //Show how much battery current capacity as range
 //0 : 0 - 33 %
@@ -211,7 +211,7 @@ void UpdateBatteryUI(Rectangle rect)
 	}
 
 	char temp[32];
-	char* state = (batteryState == 0) ? "CHG" : "DCHG";
+	char* state = (batteryChargingState == 0) ? "CHG" : "DCHG";
 	sprintf(temp, "SOC: %u %% %s", batteryPercent, state);
 	ILI9341_Draw_Text(temp, rect.X0 + 10, rect.Y0 + 64, fontColor, 1, SubBgColor);
 
