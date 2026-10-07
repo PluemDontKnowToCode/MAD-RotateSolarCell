@@ -12,11 +12,19 @@ typedef struct
 	uint16_t Y1;
 } Rectangle;
 
+
+typedef struct
+{
+	uint16_t X;
+	uint16_t Y;
+	uint16_t radius;
+} Circle;
+
 /* Convert 8-bit R, G, B (0-255) to RGB565 */
 uint16_t mixedColor(uint8_t r, uint8_t g, uint8_t b);
  
 /* Returns 1 if point (px, py) is inside the circle centred at (cx, cy) */
-uint8_t PointInCircle(uint16_t px, uint16_t py, uint16_t cx, uint16_t cy, uint16_t radius);
+uint8_t PointInCircle(uint16_t px, uint16_t py, Circle c);
  
 /* Returns 1 if point (px, py) is strictly inside the rectangle */
 uint8_t PointInRectangle(uint16_t px, uint16_t py,
@@ -26,4 +34,12 @@ uint8_t PointInRectangle(uint16_t px, uint16_t py,
    Pixels equal to 0x0000 are treated as transparent and replaced by bgColor. */
 void ILI9341_Draw_Image_With_Pos(const uint8_t *img, uint16_t startX, uint16_t startY,
                                  uint16_t img_w, uint16_t img_h, uint16_t bgColor);
+
+void ILI9341_Draw_Hollow_Round_Rectangle_Coord(
+    uint16_t X0, uint16_t Y0, uint16_t X1, uint16_t Y1,
+    uint16_t Colour, uint16_t Radius);
+
+void ILI9341_Draw_Filled_Round_Rectangle_Coord(
+    uint16_t X0, uint16_t Y0, uint16_t X1, uint16_t Y1,
+    uint16_t Colour, uint16_t Radius);
 #endif
