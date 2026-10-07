@@ -1,0 +1,23 @@
+name: STM32 Build CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # ใช้ Docker Container สำเร็จรูปที่มี STM32CubeIDE ติดตั้งมาให้อยู่แล้ว
+    # ระบบจะมองหาไฟล์ .project และ .cproject เองอัตโนมัติและบิลด์ให้ถูกวิธี
+    - name: Build STM32 Project
+      uses: xanderhendriks/action-build-stm32cubeide@v17.0
+      with:
+        project-path: '.'
+        project-target: 'MAD-RotateSolarCell/Debug'

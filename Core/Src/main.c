@@ -18,7 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "adc.h"
+#include "dma.h"
 #include "eth.h"
+#include "i2c.h"
 #include "rng.h"
 #include "spi.h"
 #include "tim.h"
@@ -28,6 +31,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <ldr.h>
+#include <INA219.h>
 #include "stdio.h"
 #include "ILI9341_Touchscreen.h"
 #include "string.h"
