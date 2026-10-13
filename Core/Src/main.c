@@ -493,6 +493,23 @@ void TrackingUI()
 	}
 }
 
+// Wait for initial I2C signal -> by wake the sensor before read it
+void WakeI2C_signal(INA219_t* sensor, uint8_t address_sensor, uint8_t max_retry){
+	uint8_t retry_count = 0;
+
+	while(!INA219_Init(sensor, &hi2c1, address_sensor) && retry_count < max_retry - 1){
+		retry_count++;
+		HAL_Delay(100);
+	}
+
+	if(retry_count >= max_retry - 1) {
+	    // print บอกว่า ไม่เจอ ไม่ก็แสดงผลบนจอ lcd
+	    printf("Solar Sensor Error: Not Found!\n");
+	} else {
+	    printf("Solar Sensor Initialized.\n");
+	}
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -539,17 +556,10 @@ int main(void)
 
 
 
-  // Wait for initial I2C signal -> by wake the sensor before read it
-  // using Handle I2C 1 -> ใช้ I2C1 ของ board, PB6 for SCL and PB9 for SDA
-  while(!INA219_Init(&ina219_solar, &hi2c1, INA219_ADDRESS_1))
-	{
-
-	}
-  // using Handle I2C 2 -> ใช้ I2C2 ของ board, PF1 for SCL and PF0 for SDA
-  while(!INA219_Init(&ina219_battery, &hi2c1, INA219_ADDRESS_2))
-  	{
-
-	}
+  // using Handle I2C 1 -> ใช้ I2C1 ของ board, PB6 for SCL and PB9 for SDA -> Address เดิม น่าจะ 0x40
+  WakeI2C_signal(&ina219_solar, INA219_ADDRESS_1, 3);
+  // using Handle I2C 1 เหมือนกัน address 0x41
+  WakeI2C_signal(&ina219_battery, INA219_ADDRESS_2, 3);
 
   /* USER CODE END 2 */
 
@@ -591,7 +601,7 @@ int main(void)
 	  displayNumber(power_battery);
 
 	  // กันอ่านมันส์เกิน
-	  HAL_Delay(100);
+//	  HAL_Delay(100);
 
   }
   /* USER CODE END 3 */
