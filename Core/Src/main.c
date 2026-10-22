@@ -264,7 +264,6 @@ int main(void)
 		  }
 	  }
 
-	  // !!!NOTE!!!: MAP var to lcd ทีหลัง
 
 	  // ==========  solar  ===========
 	  // return milli 10^-3
@@ -299,9 +298,23 @@ int main(void)
 	  float power_use = INA219_GetTotalPowerUsed(&ina219_load) / 1000.0;
 
 	  // show value on terminal by using USART3
-	  displayNumber(pow_s);
-	  displayNumber(pow_l);
+//	  displayNumber(pow_s);
+//	  displayNumber(pow_l);
 
+	  // MAP Variable from sensor to LCD
+	  batteryPercent = (uint8_t)batt_soc;
+	  float f_num[] = {volt_s, amp_s, pow_s, volt_l, amp_l, pow_l, power_use};
+	  uint16_t lcd_num[6]; // now not use power_use
+	  for (int i=0;i<6;i++){
+		  lcd_num[i] = (uint16_t)(f_num[i] + 0.5f); //0.5 for >0.5 -> upper
+	  }
+
+	  solarCellVolt   = lcd_num[0];
+	  solarCellAmpare = lcd_num[1];
+	  solarCellWatt   = lcd_num[2];
+	  loadVolt        = lcd_num[3];
+	  loadAmpare      = lcd_num[4];
+	  loadWatt        = lcd_num[5];
 
   }
   /* USER CODE END 3 */
