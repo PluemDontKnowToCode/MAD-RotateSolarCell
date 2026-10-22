@@ -128,7 +128,13 @@ void Error_Handler(void);
 #define LD2_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-
+// Relay module IN pin (Arduino/Zio connector label D4 on this Nucleo-144 board).
+// NOTE: verify trigger polarity on the actual relay module before relying on
+// GPIO_PIN_SET meaning "relay energized" -- many opto-isolated relay boards
+// are active-LOW (IN pulled to GND turns the relay ON). Swap SET/RESET in
+// main.c if that's the case for this board.
+#define RELAY_EXT_PWR_Pin GPIO_PIN_14
+#define RELAY_EXT_PWR_GPIO_Port GPIOF
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

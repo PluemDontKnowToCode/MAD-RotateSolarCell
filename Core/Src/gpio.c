@@ -66,6 +66,9 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, CS_Pin|DC_Pin|RST_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(RELAY_EXT_PWR_GPIO_Port, RELAY_EXT_PWR_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pins : T_IRQ_Pin T_MISO_Pin */
   GPIO_InitStruct.Pin = T_IRQ_Pin|T_MISO_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
@@ -111,6 +114,13 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : RELAY_EXT_PWR_Pin */
+  GPIO_InitStruct.Pin = RELAY_EXT_PWR_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(RELAY_EXT_PWR_GPIO_Port, &GPIO_InitStruct);
 
 }
 

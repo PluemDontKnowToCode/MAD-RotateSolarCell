@@ -57,6 +57,12 @@
 #define batteryMin 10.5
 #define batteryLow 10.0f
 
+// Battery SOC (%) at/below which we cut over to the external relay power source.
+#define BATTERY_SOC_SWITCH_THRESHOLD 20.0f
+// Battery SOC (%) that must be reached again before the cutover is allowed to
+// trigger a second time (keeps the relay from chattering around 20%).
+#define BATTERY_SOC_RESET_THRESHOLD 21.0f
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -97,6 +103,11 @@ uint8_t batteryChargingState = 0;
 //1 : 34 - 67 %
 //2 :: 68 - 100 %
 uint8_t batterySizeState = 0;
+
+// 0 : on battery power
+// 1 : cut over to external relay power (latched until SOC recovers past
+//     BATTERY_SOC_RESET_THRESHOLD, which also re-arms the trigger)
+uint8_t extRelayActive = 0;
 ///////////////////////////////////////////////////////
 //Load
 //Mock data
@@ -285,6 +296,22 @@ int main(void)
 	  // don't know that if we need this statement, So I will write it down
 	  else if(INA219_HealthCheck(&ina219_battery, batteryLow, batt_soc) == Battery_OK){
 		  printf("Battery now is OK : %f",batt_soc);
+	  }
+
+	  // ====  battery SOC -> external relay power cutover  ====
+	  // First time SOC drops to/below the threshold, latch the relay onto the
+	  // external power source. While latched, further drops do nothing (it only
+	  // switches once). The latch only clears once SOC climbs back to/above the
+	  // reset threshold, which also switches back to battery power.
+	  if (!extRelayActive && batt_soc <= BATTERY_SOC_SWITCH_THRESHOLD){
+		  HAL_GPIO_WritePin(RELAY_EXT_PWR_GPIO_Port, RELAY_EXT_PWR_Pin, GPIO_PIN_SET);
+		  extRelayActive = 1;
+		  printf("Battery SOC %.1f%% <= %.0f%% : switched to EXTERNAL relay power\n", batt_soc, BATTERY_SOC_SWITCH_THRESHOLD);
+	  }
+	  else if (extRelayActive && batt_soc >= BATTERY_SOC_RESET_THRESHOLD){
+		  HAL_GPIO_WritePin(RELAY_EXT_PWR_GPIO_Port, RELAY_EXT_PWR_Pin, GPIO_PIN_RESET);
+		  extRelayActive = 0;
+		  printf("Battery SOC %.1f%% >= %.0f%% : switched back to BATTERY, trigger re-armed\n", batt_soc, BATTERY_SOC_RESET_THRESHOLD);
 	  }
 
 	  // ==========  load   ===========
