@@ -1,5 +1,6 @@
 #include <ldr.h>
-extern ADC_HandleTypeDef hadc1;
+#include <adc.h>
+#include "stm32f7xx_hal.h"
 
 // GPIO is GPIOA for all pin
 const uint16_t LDR_PINS[4] 		= { GPIO_PIN_0, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6 };
@@ -20,6 +21,8 @@ void LDR_stop_read()
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-	if(hadc1.Instance != hadc->Instance) return;
-	ldr_cplt_flag = 1;
+	if(hadc == &hadc1)
+	{
+		ldr_cplt_flag = 1;
+	}
 }
