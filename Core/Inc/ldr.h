@@ -9,7 +9,7 @@
 
 extern const uint16_t LDR_PINS[4];
 extern const uint8_t LDR_AMOUNT;
-extern volatile uint8_t ldr_cplt_fla;
+extern volatile uint8_t ldr_cplt_flag;
 
 void LDR_start_read(uint32_t *dest);
 void LDR_stop_read();
