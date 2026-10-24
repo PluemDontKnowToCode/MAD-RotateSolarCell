@@ -63,7 +63,7 @@ void StartUI_Init()
 
 	uint32_t start = HAL_GetTick();
 
-	while(HAL_GetTick() - start <= 2000)
+	while(HAL_GetTick() - start <= 1500)
 	{
 		HAL_Delay(20);
 	}
@@ -217,7 +217,7 @@ uint8_t DashboardUI_Loop()
 
 	//tracking mode dynamic
 	sprintf(s_posBuffer, "X:%d", x);
-	ILI9341_Draw_Text(s_posBuffer, rect4.X0 + 38, rect4.Y0 + 65, BLACK, 1.3f, buttonColor);
+	ILI9341_Draw_Text(s_posBuffer, rect4.X0 + 65, rect4.Y0 + 65, BLACK, 1.3f, buttonColor);
 
 	if (TP_Touchpad_Pressed())
 	{
@@ -418,7 +418,7 @@ uint8_t TrackingUI_Loop()
 	ILI9341_Draw_Text(temp, powerDisplayArea.X0 + 12, powerDisplayArea.Y0 + 26, fontColor, 1, BLACK);
 
 	sprintf(s_posBuffer, "X:%d", x);
-	ILI9341_Draw_Text(s_posBuffer, positionDisplay.X0 + 13, positionDisplay.Y0 + 17, fontColor, 1.3f, BgColor);
+	ILI9341_Draw_Text(s_posBuffer, positionDisplay.X0 + 50, positionDisplay.Y0 + 9, fontColor, 1.3f, BgColor);
 	return 0;
 }
 
