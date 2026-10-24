@@ -63,7 +63,7 @@ void StartUI_Init()
 
 	uint32_t start = HAL_GetTick();
 
-	while(HAL_GetTick() - start <= 2000)
+	while(HAL_GetTick() - start <= 1500)
 	{
 		HAL_Delay(20);
 	}
@@ -216,8 +216,8 @@ uint8_t DashboardUI_Loop()
 	ILI9341_Draw_Text(temp, rect3.X0 + 16, rect3.Y0 + 78, fontColor, 1, SubBgColor);
 
 	//tracking mode dynamic
-	sprintf(s_posBuffer, "X:%d  Y:%d", x, y);
-	ILI9341_Draw_Text(s_posBuffer, rect4.X0 + 38, rect4.Y0 + 65, BLACK, 1.3f, buttonColor);
+	sprintf(s_posBuffer, "X:%d", x);
+	ILI9341_Draw_Text(s_posBuffer, rect4.X0 + 65, rect4.Y0 + 65, BLACK, 1.3f, buttonColor);
 
 	if (TP_Touchpad_Pressed())
 	{
@@ -303,9 +303,9 @@ Rectangle leftButton = {2, 108, 2 + 56, 108 + 56};
 
 Rectangle rightButton = {118, 108, 118 + 56, 108 + 56};
 
-Rectangle upButton = {59 ,66 ,59 + 56, 66 + 56};
-
-Rectangle downButton = {59, 155, 59 + 56, 155 + 56};
+//Rectangle upButton = {59 ,66 ,59 + 56, 66 + 56};
+//
+//Rectangle downButton = {59, 155, 59 + 56, 155 + 56};
 
 Rectangle positionDisplay = {191, 195, 191 + 112, 195 + 32};
 
@@ -335,13 +335,13 @@ void TrackingUI_Init()
 	ILI9341_Draw_Image_With_Pos(circleButton, rightButton.X0, rightButton.Y0, 56, 56, BgColor);
 	ILI9341_Draw_Text("right", 134,127, fontColor, 1, circleButtonColor);
 
-	//up
-	ILI9341_Draw_Image_With_Pos(circleButton,upButton.X0, upButton.Y0, 56, 56, BgColor);
-	ILI9341_Draw_Text("up", 79, 86, fontColor, 1, circleButtonColor);
+//	//up
+//	ILI9341_Draw_Image_With_Pos(circleButton,upButton.X0, upButton.Y0, 56, 56, BgColor);
+//	ILI9341_Draw_Text("up", 79, 86, fontColor, 1, circleButtonColor);
 
-	//down
-	ILI9341_Draw_Image_With_Pos(circleButton, downButton.X0, downButton.Y0, 56, 56, BgColor);
-	ILI9341_Draw_Text("down", 73, 175, fontColor, 1, circleButtonColor);
+//	//down
+//	ILI9341_Draw_Image_With_Pos(circleButton, downButton.X0, downButton.Y0, 56, 56, BgColor);
+//	ILI9341_Draw_Text("down", 73, 175, fontColor, 1, circleButtonColor);
 
 	//Choose mode
 	ToggleTrackMode(trackArea5_1, trackArea5_2);
@@ -388,18 +388,18 @@ uint8_t TrackingUI_Loop()
 				HAL_UART_Transmit(&huart3, (uint8_t*)"x++\n\r", 5, 200);
 				WaitForTouchRelease();
 			}
-			else if(PointInRectangle(x_pos, y_pos, upButton))
-			{
-				if(y < Y_POS_LIMIT) y++;
-				HAL_UART_Transmit(&huart3, (uint8_t*)"y++\n\r", 5, 200);
-				WaitForTouchRelease();
-			}
-			else if(PointInRectangle(x_pos, y_pos, downButton))
-			{
-				if (y > 0) y--;
-				HAL_UART_Transmit(&huart3, (uint8_t*)"y--\n\r", 5, 200);
-				WaitForTouchRelease();
-			}
+//			else if(PointInRectangle(x_pos, y_pos, upButton))
+//			{
+//				if(y < Y_POS_LIMIT) y++;
+//				HAL_UART_Transmit(&huart3, (uint8_t*)"y++\n\r", 5, 200);
+//				WaitForTouchRelease();
+//			}
+//			else if(PointInRectangle(x_pos, y_pos, downButton))
+//			{
+//				if (y > 0) y--;
+//				HAL_UART_Transmit(&huart3, (uint8_t*)"y--\n\r", 5, 200);
+//				WaitForTouchRelease();
+//			}
 			else if(PointInRectangle(x_pos, y_pos, trackArea5_1) && trackingModeState == 0)
 			{
 				trackingModeState = 1;
@@ -417,8 +417,8 @@ uint8_t TrackingUI_Loop()
 	sprintf(temp, "%u.%u W", solarCellWatt / 10, solarCellWatt % 10);
 	ILI9341_Draw_Text(temp, powerDisplayArea.X0 + 12, powerDisplayArea.Y0 + 26, fontColor, 1, BLACK);
 
-	sprintf(s_posBuffer, "X:%d  Y:%d", x, y);
-	ILI9341_Draw_Text(s_posBuffer, positionDisplay.X0 + 13, positionDisplay.Y0 + 17, fontColor, 1.3f, BgColor);
+	sprintf(s_posBuffer, "X:%d", x);
+	ILI9341_Draw_Text(s_posBuffer, positionDisplay.X0 + 50, positionDisplay.Y0 + 9, fontColor, 1.3f, BgColor);
 	return 0;
 }
 

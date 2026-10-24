@@ -226,7 +226,68 @@ int main(void)
 	  while(1)
 	  {
 		  //process
+		  for (int i=0; i<3; i++){
+		  		 // solar -> battery -> load
+		  		  if (HAL_I2C_IsDeviceReady(&hi2c1, (ina219_address[i] << 1),3 ,2) == HAL_OK){
+		  			  continue;
+		  		  }
+		  		  else {
+		  			  WakeI2C_signal(ina219_list[i], ina219_address[i], 1);
+		  			  printf("try to wake i2c sensor address : %x \n",ina219_address[i]);
+		  		  }
+		  	  }
 
+
+		  	  // ==========  solar  ===========
+		  	  // return milli 10^-3
+		  	  float volt_s = INA219_ReadBusVoltage(&ina219_solar) / 1000.0;
+		  	  float amp_s  = INA219_ReadCurrent(&ina219_solar) / 1000.0;
+		  	  // choose 1 line
+		  //	  float pow_s  = INA219_ReadPower(&ina219_solar) / 1000.0;
+		  	  float pow_s  = INA219_GetAVGMiliWatt(&ina219_solar) / 1000.0;
+
+		  	  // ==========  battery   ===========
+		  	  // check battery state of charge -> return 0-100 % ?
+		  	  // need to pass params in milli volt
+		  	  float batt_soc = INA219_GetBatteryLife(&ina219_battery, batteryMax*1000, batteryMin*1000);
+
+		  	  // for checking when battery is run out
+		  	  if (INA219_HealthCheck(&ina219_battery, batteryLow, batt_soc) == Battery_LOW){
+		  		  printf("Battery now is LOW : %f",batt_soc);
+		  	  }
+		  	  // don't know that if we need this statement, So I will write it down
+		  	  else if(INA219_HealthCheck(&ina219_battery, batteryLow, batt_soc) == Battery_OK){
+		  		  printf("Battery now is OK : %f",batt_soc);
+		  	  }
+
+		  	  // ==========  load   ===========
+		  	  float volt_l = INA219_ReadBusVoltage(&ina219_load) / 1000.0;
+		  	  float amp_l  = INA219_ReadCurrent(&ina219_load) / 1000.0;
+		  //	  float pow_l  = INA219_ReadPower(&ina219_solar) / 1000.0;
+		  	  float pow_l  = INA219_GetAVGMiliWatt(&ina219_load) / 1000.0;
+
+		  	  // Find Watt ที่ใช้ตั้งแต่เปิดเครื่องมา
+		  	  // return เป็น มิลลิวัตต์-มิลลิวินาที (mW·ms) เอาไป / 1000 ให้เป็น sec
+		  	  float power_use = INA219_GetTotalPowerUsed(&ina219_load) / 1000.0;
+
+		  	  // show value on terminal by using USART3
+		  //	  displayNumber(pow_s);
+		  //	  displayNumber(pow_l);
+
+		  	  // MAP Variable from sensor to LCD
+		  	  batteryPercent = (uint8_t)batt_soc;
+		  	  float f_num[] = {volt_s, amp_s, pow_s, volt_l, amp_l, pow_l, power_use};
+		  	  uint16_t lcd_num[6]; // now not use power_use
+		  	  for (int i=0;i<6;i++){
+		  		  lcd_num[i] = (uint16_t)(f_num[i] + 0.5f); //0.5 for >0.5 -> upper
+		  	  }
+
+		  	  solarCellVolt   = lcd_num[0];
+		  	  solarCellAmpare = lcd_num[1];
+		  	  solarCellWatt   = lcd_num[2];
+		  	  loadVolt        = lcd_num[3];
+		  	  loadAmpare      = lcd_num[4];
+		  	  loadWatt        = lcd_num[5];
 		  if (uipage == 0x01)
 		  {
 			  if(DashboardUI_Loop() == 1)
@@ -254,68 +315,7 @@ int main(void)
 /////////////////  Read Current Sensor  ////////////////////////
 
 	  // ตอนนี้ให้มัน check ทุก loop แล้วก็ลอง wake ตลอด
-	  for (int i=0; i<3; i++){
-		 // solar -> battery -> load
-		  if (HAL_I2C_IsDeviceReady(&hi2c1, (ina219_address[i] << 1),3 ,2) == HAL_OK){
-			  continue;
-		  }
-		  else {
-			  WakeI2C_signal(ina219_list[i], ina219_address[i], 1);
-			  printf("try to wake i2c sensor address : %x \n",ina219_address[i]);
-		  }
-	  }
 
-
-	  // ==========  solar  ===========
-	  // return milli 10^-3
-	  float volt_s = INA219_ReadBusVoltage(&ina219_solar) / 1000.0;
-	  float amp_s  = INA219_ReadCurrent(&ina219_solar) / 1000.0;
-	  // choose 1 line
-//	  float pow_s  = INA219_ReadPower(&ina219_solar) / 1000.0;
-	  float pow_s  = INA219_GetAVGMiliWatt(&ina219_solar) / 1000.0;
-
-	  // ==========  battery   ===========
-	  // check battery state of charge -> return 0-100 % ?
-	  // need to pass params in milli volt
-	  float batt_soc = INA219_GetBatteryLife(&ina219_battery, batteryMax*1000, batteryMin*1000);
-
-	  // for checking when battery is run out
-	  if (INA219_HealthCheck(&ina219_battery, batteryLow, batt_soc) == Battery_LOW){
-		  printf("Battery now is LOW : %f",batt_soc);
-	  }
-	  // don't know that if we need this statement, So I will write it down
-	  else if(INA219_HealthCheck(&ina219_battery, batteryLow, batt_soc) == Battery_OK){
-		  printf("Battery now is OK : %f",batt_soc);
-	  }
-
-	  // ==========  load   ===========
-	  float volt_l = INA219_ReadBusVoltage(&ina219_load) / 1000.0;
-	  float amp_l  = INA219_ReadCurrent(&ina219_load) / 1000.0;
-//	  float pow_l  = INA219_ReadPower(&ina219_solar) / 1000.0;
-	  float pow_l  = INA219_GetAVGMiliWatt(&ina219_load) / 1000.0;
-
-	  // Find Watt ที่ใช้ตั้งแต่เปิดเครื่องมา
-	  // return เป็น มิลลิวัตต์-มิลลิวินาที (mW·ms) เอาไป / 1000 ให้เป็น sec
-	  float power_use = INA219_GetTotalPowerUsed(&ina219_load) / 1000.0;
-
-	  // show value on terminal by using USART3
-//	  displayNumber(pow_s);
-//	  displayNumber(pow_l);
-
-	  // MAP Variable from sensor to LCD
-	  batteryPercent = (uint8_t)batt_soc;
-	  float f_num[] = {volt_s, amp_s, pow_s, volt_l, amp_l, pow_l, power_use};
-	  uint16_t lcd_num[6]; // now not use power_use
-	  for (int i=0;i<6;i++){
-		  lcd_num[i] = (uint16_t)(f_num[i] + 0.5f); //0.5 for >0.5 -> upper
-	  }
-
-	  solarCellVolt   = lcd_num[0];
-	  solarCellAmpare = lcd_num[1];
-	  solarCellWatt   = lcd_num[2];
-	  loadVolt        = lcd_num[3];
-	  loadAmpare      = lcd_num[4];
-	  loadWatt        = lcd_num[5];
 
   }
   /* USER CODE END 3 */
