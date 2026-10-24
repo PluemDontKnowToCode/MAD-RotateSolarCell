@@ -31,7 +31,8 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#define X_POS_LIMIT 180
+#define Y_POS_LIMIT 180
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
