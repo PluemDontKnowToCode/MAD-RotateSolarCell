@@ -49,13 +49,14 @@
 /* USER CODE BEGIN PD */
 #define INA219_ADDRESS_1  INA219_ADDRESS  // ปกติคือ 0x40
 #define INA219_ADDRESS_2  0x41
-#define INA219_ADDRESS_3  0x42
+#define INA219_ADDRESS_3  0x44
 
 // Should Check again for sure
 // หน่วยเป็น Volt
 #define batteryMax 12.6
-#define batteryMin 10.5
-#define batteryLow 10.0f
+#define batteryMin 9.00
+// ถือว่า low เป็น 20% ที่ถ่านก้อนละ 3.58 V
+#define batteryLow 10.74f
 
 /* USER CODE END PD */
 
