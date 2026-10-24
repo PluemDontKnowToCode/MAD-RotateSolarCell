@@ -34,7 +34,7 @@
 
 #include <ldr.h>
 #include <INA219.h>
-
+#include <servo.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -117,40 +117,36 @@ int main(void)
   MX_TIM1_Init();
   MX_ADC1_Init();
   MX_I2C1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   // Wait for initial I2C signal -> by wake the sensor before read it
   // using Handle I2C 1 -> ใช้ I2C1 ของ board, PB6 for SCL and PB9 for SDA
-  while(!INA219_Init(&ina219_solar, &hi2c1, INA219_ADDRESS_1))
-	{
 
-	}
-  // using Handle I2C 2 -> ใช้ I2C2 ของ board, PF1 for SCL and PF0 for SDA
-  while(!INA219_Init(&ina219_battery, &hi2c1, INA219_ADDRESS_2))
-  	{
-
-	}
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  uint16_t flag = 0xffff;
-
-      // test reading current sensor
-	  uint16_t power_solar  = INA219_ReadPower(&ina219_solar);
-	  uint16_t power_battery = INA219_ReadPower(&ina219_battery);
-
-	  // show value on terminal by using USART3
-	  displayNumber(power_solar);
-	  displayNumber(power_battery);
-
-	  // กันอ่านมันส์เกิน
-	  HAL_Delay(100);
+	  for(int i = 0; i <= 180; i+=1)
+	  {
+		  servo_write_rotate((float)i, 1);
+		  displayNumber(i);
+		  HAL_Delay(100);
+	  }
+	  for(int i = 180; i >= 0; i-=1)
+	  {
+		  servo_write_rotate((float)i, 1);
+		  displayNumber(i);
+		  HAL_Delay(100);
+	  }
+//	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 1);
 
   }
   /* USER CODE END 3 */
