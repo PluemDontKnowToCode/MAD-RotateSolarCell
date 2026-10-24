@@ -119,39 +119,28 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-  // Wait for initial I2C signal -> by wake the sensor before read it
-  // using Handle I2C 1 -> ใช้ I2C1 ของ board, PB6 for SCL and PB9 for SDA
-  while(!INA219_Init(&ina219_solar, &hi2c1, INA219_ADDRESS_1))
-	{
-
-	}
-  // using Handle I2C 2 -> ใช้ I2C2 ของ board, PF1 for SCL and PF0 for SDA
-  while(!INA219_Init(&ina219_battery, &hi2c1, INA219_ADDRESS_2))
-  	{
-
-	}
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint32_t ldr_value[4];
+  LDR_start_read(ldr_value);
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  uint16_t flag = 0xffff;
-
-      // test reading current sensor
-	  uint16_t power_solar  = INA219_ReadPower(&ina219_solar);
-	  uint16_t power_battery = INA219_ReadPower(&ina219_battery);
-
-	  // show value on terminal by using USART3
-	  displayNumber(power_solar);
-	  displayNumber(power_battery);
-
-	  // กันอ่านมันส์เกิน
-	  HAL_Delay(100);
-
+	  if(!ldr_cplt_flag) continue;
+	  LDR_stop_read();
+	  for(int i = 0; i < LDR_AMOUNT; i++)
+	  {
+		  displayNumber(ldr_value[i]);
+	  }
+	  displayNumber(55555);
+	  HAL_Delay(500);
+	  LDR_start_read(ldr_value);
+	  ldr_cplt_flag = 0;
   }
   /* USER CODE END 3 */
 }
